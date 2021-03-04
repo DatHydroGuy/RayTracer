@@ -148,6 +148,15 @@ class MaterialsTestCase(unittest.TestCase):
         self.assertEqual(result1, expected1)
         self.assertEqual(result2, expected2)
 
+    def test_the_default_material_has_a_reflective_property(self):
+        # Arrange
+        m = Material()
+
+        # Act
+
+        # Assert
+        self.assertEqual(m.reflective, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

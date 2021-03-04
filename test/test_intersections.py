@@ -1,6 +1,5 @@
 import unittest
-from intersections import Intersection
-from primitives import Sphere
+from primitives import *
 from rays import Ray
 from tuples import *
 from matrices import Matrix
@@ -150,6 +149,18 @@ class IntersectionsTestCase(unittest.TestCase):
         # Assert
         self.assertLess(comps.over_point.z, -i.EPSILON / 2)
         self.assertGreater(comps.point.z, comps.over_point.z)
+
+    def test_the_reflection_vector_is_precomputed(self):
+        # Arrange
+        shape = Plane()
+        r = Ray(Point(0, 1, -1), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        i = Intersection(sqrt(2), shape)
+
+        # Act
+        comps = i.prepare_computations(r)
+
+        # Assert
+        self.assertEqual(comps.reflect_vector, Vector(0, sqrt(2) / 2, sqrt(2) / 2))
 
 
 if __name__ == '__main__':

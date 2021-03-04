@@ -19,15 +19,16 @@ class World:
         flattened_intersections = World.flatten(intersections)
         return sorted(flattened_intersections, key=lambda x: x.t)
 
-    def shade_hit(self, comps):
+    def shade_hit(self, comps, remaining=5):
         base_colour = Colour(0, 0, 0)
         for light in self.lights:
             shadowed = self.is_shadowed(comps.over_point, light)
             base_colour += comps.object.material.lighting(comps.object, light, comps.over_point, comps.eye_vector,
                                                           comps.normal_vector, shadowed)
+            base_colour += self.reflected_colour(comps, remaining)
         return base_colour
 
-    def colour_at(self, ray):
+    def colour_at(self, ray, remaining=5):
         intersections = self.intersect_world(ray)
         hits = [i for i in intersections if i.t >= 0]
         if len(hits) == 0:
@@ -35,7 +36,7 @@ class World:
         else:
             hit = min(hits)
             comps = hit.prepare_computations(ray)
-            return self.shade_hit(comps)
+            return self.shade_hit(comps, remaining)
 
     def is_shadowed(self, point, light=None):
         if light is None:
@@ -53,6 +54,14 @@ class World:
             return True
         else:
             return False
+
+    def reflected_colour(self, comps, remaining=5):
+        if comps.object.material.reflective == 0 or remaining < 1:
+            return Colour(0, 0, 0)
+        else:
+            reflect_ray = Ray(comps.over_point, comps.reflect_vector)
+            colour = self.colour_at(reflect_ray, remaining - 1)
+            return colour * comps.object.material.reflective
 
     @staticmethod
     def flatten(list_of_lists):

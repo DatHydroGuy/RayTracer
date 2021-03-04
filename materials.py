@@ -11,6 +11,7 @@ class Material:
         self.specular = 0.9 if specular is None else specular
         self.shininess = 200.0 if shininess is None else shininess
         self.pattern = None
+        self.reflective = 0
 
     def __eq__(self, other, epsilon=0.00001):
         return fabs(self.colour.red - other.colour.red) < epsilon and \

@@ -1,7 +1,7 @@
 import unittest
 from world import World
 from lights import PointLight
-from primitives import Sphere
+from primitives import *
 from matrices import Matrix
 from tuples import *
 from colours import Colour
@@ -186,6 +186,98 @@ class WorldTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(c, expected)
+
+    def test_the_reflected_colour_of_a_nonreflective_material_is_black(self):
+        # Arrange
+        w = World.default_world()
+        ray = Ray(Point(0, 0, 0), Vector(0, 0, 1))
+        shape = w.objects[1]
+        shape.material.ambient = 1
+        intersect = Intersection(1, shape)
+        expected = Colour(0, 0, 0)
+
+        # Act
+        comps = intersect.prepare_computations(ray)
+        c = w.reflected_colour(comps)
+
+        # Assert
+        self.assertEqual(c, expected)
+
+    def test_the_reflected_colour_of_a_reflective_material(self):
+        # Arrange
+        w = World.default_world()
+        shape = Plane()
+        shape.material.reflective = 0.5
+        shape.transform = Matrix.translation(0, -1, 0)
+        w.objects.append(shape)
+        ray = Ray(Point(0, 0, -3), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        intersect = Intersection(sqrt(2), shape)
+        expected = Colour(0.19033, 0.23792, 0.14275)
+
+        # Act
+        comps = intersect.prepare_computations(ray)
+        c = w.reflected_colour(comps)
+
+        # Assert
+        self.assertEqual(c, expected)
+
+    def test_shade_hit_with_a_reflective_material(self):
+        # Arrange
+        w = World.default_world()
+        shape = Plane()
+        shape.material.reflective = 0.5
+        shape.transform = Matrix.translation(0, -1, 0)
+        w.objects.append(shape)
+        ray = Ray(Point(0, 0, -3), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        intersect = Intersection(sqrt(2), shape)
+        expected = Colour(0.87676, 0.92434, 0.82917)
+
+        # Act
+        comps = intersect.prepare_computations(ray)
+        c = w.shade_hit(comps)
+
+        # Assert
+        self.assertEqual(c, expected)
+
+    def test_colour_at_between_two_reflective_surfaces_should_terminate_successfully(self):
+        # Arrange
+        world = World()
+        world.lights.append(PointLight(Point(0, 0, 0), Colour(1, 1, 1)))
+        lower_plane = Plane()
+        lower_plane.material = Material()
+        lower_plane.material.reflective = 1
+        lower_plane.transform = Matrix.translation(0, -1, 0)
+        upper_plane = Plane()
+        upper_plane.material = Material()
+        upper_plane.material.reflective = 1
+        upper_plane.transform = Matrix.translation(0, 1, 0)
+        world.objects = [lower_plane, upper_plane]
+        ray = Ray(Point(0, 0, 0), Vector(0, 1, 0))
+        black = Colour(0, 0, 0)
+
+        # Act
+        colour = world.colour_at(ray)
+
+        self.assertNotEqual(colour, black)
+
+    def test_the_reflected_colour_at_the_maximum_recursive_depth(self):
+        # Arrange
+        world = World.default_world()
+        shape = Plane()
+        shape.material = Material()
+        shape.material.reflective = 0.5
+        shape.transform = Matrix.translation(0, -1, 0)
+        world.objects = [shape]
+        ray = Ray(Point(0, 0, -3), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        intersect = Intersection(sqrt(2), shape)
+        expected = Colour(0, 0, 0)
+
+        # Act
+        comps = intersect.prepare_computations(ray)
+        colour = world.reflected_colour(comps, 0)
+
+        # Assert
+        self.assertEqual(colour, expected)
 
 
 if __name__ == '__main__':

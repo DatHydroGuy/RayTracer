@@ -10,6 +10,7 @@ class Comps:
     point: Point = None
     eye_vector: Vector = None
     normal_vector: Vector = None
+    reflect_vector: Vector = None
     inside: bool = None
     over_point: Point = None
 
@@ -31,12 +32,13 @@ class Intersection:
         comps.point = ray.position(self.t)
         comps.eye_vector = -ray.direction
         comps.normal_vector = comps.object.normal_at(comps.point)
+        comps.reflect_vector = ray.direction.reflect(comps.normal_vector)
         if comps.normal_vector.dot(comps.eye_vector) < 0:
             comps.inside = True
             comps.normal_vector = -comps.normal_vector
         else:
             comps.inside = False
-        comps.over_point = comps.point + comps.normal_vector * self.EPSILON
+        comps.over_point = Point.from_tuple(comps.point + comps.normal_vector * self.EPSILON)
         return comps
 
     @staticmethod

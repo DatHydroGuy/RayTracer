@@ -1,4 +1,5 @@
 from tuples import Vector
+from math import fabs
 
 
 class Colour(Vector):
@@ -7,6 +8,11 @@ class Colour(Vector):
         self.red = red
         self.green = green
         self.blue = blue
+
+    def __eq__(self, other, epsilon=0.00001):
+        return fabs(self.red - other.red) < epsilon and \
+            fabs(self.green - other.green) < epsilon and \
+            fabs(self.blue - other.blue) < epsilon
 
     def __add__(self, other):
         added_tuple = super().__add__(other)
