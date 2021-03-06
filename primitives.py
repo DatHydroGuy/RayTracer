@@ -85,6 +85,13 @@ class Sphere(Shape):
         """Initialize sphere from a point and radius"""
         return cls(point.x, point.y, point.z)
 
+    @classmethod
+    def glass_sphere(cls):
+        s = cls()
+        s.material.transparency = 1
+        s.material.refractive_index = 1.5
+        return s
+
     def intersects(self, ray):
         return super().intersects(ray)
 

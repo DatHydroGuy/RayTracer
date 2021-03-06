@@ -4,14 +4,17 @@ from math import fabs
 
 
 class Material:
-    def __init__(self, colour=None, ambient=None, diffuse=None, specular=None, shininess=None):
+    def __init__(self, colour=None, ambient=None, diffuse=None, specular=None, shininess=None, reflective=None,
+                 transparency=None, refractive_index=None):
         self.colour = Colour(1, 1, 1) if colour is None else colour
         self.ambient = 0.1 if ambient is None else ambient
         self.diffuse = 0.9 if diffuse is None else diffuse
         self.specular = 0.9 if specular is None else specular
         self.shininess = 200.0 if shininess is None else shininess
+        self.reflective = 0.0 if reflective is None else reflective
+        self.transparency = 0.0 if transparency is None else transparency
+        self.refractive_index = 1.0 if refractive_index is None else refractive_index
         self.pattern = None
-        self.reflective = 0
 
     def __eq__(self, other, epsilon=0.00001):
         return fabs(self.colour.red - other.colour.red) < epsilon and \
@@ -20,7 +23,10 @@ class Material:
                fabs(self.ambient - other.ambient) < epsilon and \
                fabs(self.diffuse - other.diffuse) < epsilon and \
                fabs(self.specular - other.specular) < epsilon and \
-               fabs(self.shininess - other.shininess) < epsilon
+               fabs(self.shininess - other.shininess) < epsilon and \
+               fabs(self.reflective - other.reflective) < epsilon and \
+               fabs(self.transparency - other.transparency) < epsilon and \
+               fabs(self.refractive_index - other.refractive_index) < epsilon
 
     def lighting(self, obj, light, point, eye_vector, normal_vector, in_shadow=False):
         colour = self.pattern.pattern_at_shape(obj, point) if self.pattern is not None else self.colour

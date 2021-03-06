@@ -434,6 +434,17 @@ class PlaneTestCase(unittest.TestCase):
         self.assertEqual(xs[0].t, 1)
         self.assertEqual(xs[0].object, p)
 
+    def test_the_glass_sphere_helper_function(self):
+        # Arrange
+        s = Sphere.glass_sphere()
+
+        # Act
+
+        # Assert
+        self.assertEqual(s.transform, Matrix.identity(4))
+        self.assertEqual(s.material.transparency, 1)
+        self.assertEqual(s.material.refractive_index, 1.5)
+
 
 if __name__ == '__main__':
     unittest.main()

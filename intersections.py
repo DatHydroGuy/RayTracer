@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from tuples import *
+from math import sqrt
 
 
 @dataclass
@@ -13,6 +14,9 @@ class Comps:
     reflect_vector: Vector = None
     inside: bool = None
     over_point: Point = None
+    under_point: Point = None
+    n1: float = 0.0
+    n2: float = 0.0
 
 
 class Intersection:
@@ -25,7 +29,7 @@ class Intersection:
     def __lt__(self, other):
         return self.t < other.t
 
-    def prepare_computations(self, ray):
+    def prepare_computations(self, ray, all_intersections=None):
         comps = Comps()
         comps.t = self.t
         comps.object = self.object
@@ -39,7 +43,28 @@ class Intersection:
         else:
             comps.inside = False
         comps.over_point = Point.from_tuple(comps.point + comps.normal_vector * self.EPSILON)
+        comps.under_point = Point.from_tuple(comps.point - comps.normal_vector * self.EPSILON)
+        if all_intersections is None:
+            all_intersections = [self]
+        comps.n1, comps.n2 = self.calculate_refractive_normals(all_intersections)
         return comps
+
+    def calculate_refractive_normals(self, intersection_list):
+        containers = []
+        n1 = 1
+        n2 = 1
+        for intersect in intersection_list:
+            if fabs(intersect.t - self.t) < self.EPSILON:
+                if len(containers) > 0:
+                    n1 = containers[-1].material.refractive_index
+            if intersect.object in containers:
+                containers.remove(intersect.object)
+            else:
+                containers.append(intersect.object)
+            if fabs(intersect.t - self.t) < self.EPSILON:
+                if len(containers) > 0:
+                    n2 = containers[-1].material.refractive_index
+        return n1, n2
 
     @staticmethod
     def intersections(*args):
@@ -52,3 +77,16 @@ class Intersection:
     def hit(intersection_list):
         viables = [i for i in intersection_list if i.t >= 0]
         return min(viables) if len(viables) > 0 else None
+
+    @staticmethod
+    def schlick(comps):
+        cosine = comps.eye_vector.dot(comps.normal_vector)
+        if comps.n1 > comps.n2:
+            n = comps.n1 / comps.n2
+            sin_theta_t_squared = n * n * (1 - cosine * cosine)
+            if sin_theta_t_squared > 1:
+                return 1
+            cosine = sqrt(1 - sin_theta_t_squared)
+
+        r0 = ((comps.n1 - comps.n2) / (comps.n1 + comps.n2)) ** 2
+        return r0 + (1 - r0) * (1 - cosine) ** 5

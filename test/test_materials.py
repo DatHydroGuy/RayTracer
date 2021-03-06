@@ -157,6 +157,24 @@ class MaterialsTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(m.reflective, 0)
 
+    def test_the_default_material_has_a_transparency_property(self):
+        # Arrange
+        m = Material()
+
+        # Act
+
+        # Assert
+        self.assertEqual(m.transparency, 0)
+
+    def test_the_default_material_has_a_refractive_index_property(self):
+        # Arrange
+        m = Material()
+
+        # Act
+
+        # Assert
+        self.assertEqual(m.refractive_index, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -53,7 +53,7 @@ class Camera:
 
         return Ray(origin, direction)
 
-    def render(self, world, show_progress=False):
+    def render(self, world, reflect_depth=5, show_progress=False):
         image = Canvas(self.hsize, self.vsize)
 
         for y in range(self.vsize):

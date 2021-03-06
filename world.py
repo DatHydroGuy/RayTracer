@@ -5,6 +5,7 @@ from lights import PointLight
 from tuples import *
 from rays import Ray
 from intersections import Intersection
+from math import sqrt
 
 
 class World:
@@ -25,7 +26,14 @@ class World:
             shadowed = self.is_shadowed(comps.over_point, light)
             base_colour += comps.object.material.lighting(comps.object, light, comps.over_point, comps.eye_vector,
                                                           comps.normal_vector, shadowed)
-            base_colour += self.reflected_colour(comps, remaining)
+            reflected = self.reflected_colour(comps, remaining)
+            refracted = self.refracted_colour(comps, remaining)
+            material = comps.object.material
+            if material.reflective > 0 and material.transparency > 0:
+                reflectance = Intersection.schlick(comps)
+                return base_colour + reflected * reflectance + refracted * (1 - reflectance)
+            else:
+                return base_colour + reflected + refracted
         return base_colour
 
     def colour_at(self, ray, remaining=5):
@@ -62,6 +70,22 @@ class World:
             reflect_ray = Ray(comps.over_point, comps.reflect_vector)
             colour = self.colour_at(reflect_ray, remaining - 1)
             return colour * comps.object.material.reflective
+
+    def refracted_colour(self, comps, remaining=5):
+        if comps.object.material.transparency == 0 or remaining < 1:
+            return Colour(0, 0, 0)
+        else:
+            n_ratio = comps.n1 / comps.n2
+            cos_theta_i = comps.eye_vector.dot(comps.normal_vector)
+            sin_theta_t_squared = n_ratio * n_ratio * (1 - cos_theta_i * cos_theta_i)
+            if sin_theta_t_squared > 1:
+                return Colour(0, 0, 0)
+            else:
+                cos_theta_t = sqrt(1 - sin_theta_t_squared)
+                direction = comps.normal_vector * (n_ratio * cos_theta_i - cos_theta_t) - comps.eye_vector * n_ratio
+                refract_ray = Ray(Point.from_tuple(comps.under_point), Vector.from_tuple(direction))
+                colour = self.colour_at(refract_ray, remaining - 1)
+                return colour * comps.object.material.transparency
 
     @staticmethod
     def flatten(list_of_lists):

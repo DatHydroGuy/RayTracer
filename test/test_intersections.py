@@ -162,6 +162,87 @@ class IntersectionsTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(comps.reflect_vector, Vector(0, sqrt(2) / 2, sqrt(2) / 2))
 
+    def test_finding_n1_and_n2_at_multiple_intersections(self):
+        # Arrange
+        a = Sphere.glass_sphere()
+        a.transform = Matrix.scaling(2, 2, 2)
+        b = Sphere.glass_sphere()
+        b.transform = Matrix.translation(0, 0, -0.25)
+        b.material.refractive_index = 2
+        c = Sphere.glass_sphere()
+        c.transform = Matrix.translation(0, 0, 0.25)
+        c.material.refractive_index = 2.5
+        r = Ray(Point(0, 0, -4), Vector(0, 0, 1))
+        intersections = Intersection.intersections(Intersection(2, a), Intersection(2.75, b), Intersection(3.25, c),
+                                                   Intersection(4.75, b), Intersection(5.25, c), Intersection(6, a))
+        expected = [[1.0, 1.5], [1.5, 2.0], [2.0, 2.5], [2.5, 2.5], [2.5, 1.5], [1.5, 1.0]]
+
+        for idx, scenario in enumerate(expected):
+            with self.subTest(scenario=scenario):
+                this_intersect = intersections[idx]
+
+                # Act
+                comps = this_intersect.prepare_computations(r, intersections)
+
+                # Assert
+                self.assertEqual(comps.n1, scenario[0])
+                self.assertEqual(comps.n2, scenario[1])
+
+    def test_the_under_point_is_offset_below_the_surface(self):
+        # Arrange
+        shape = Sphere.glass_sphere()
+        shape.transform = Matrix.translation(0, 0, 1)
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        i = Intersection(5, shape)
+        xs = Intersection.intersections(i)
+
+        # Act
+        comps = i.prepare_computations(r, xs)
+
+        # Assert
+        self.assertGreater(comps.under_point.z, Intersection.EPSILON / 2)
+        self.assertLess(comps.point.z, comps.under_point.z)
+
+    def test_the_schlick_approximation_under_total_internal_reflection(self):
+        # Arrange
+        shape = Sphere.glass_sphere()
+        rtot = sqrt(2) / 2
+        r = Ray(Point(0, 0, rtot), Vector(0, 1, 0))
+        i = Intersection.intersections(Intersection(-rtot, shape), Intersection(rtot, shape))
+
+        # Act
+        comps = i[1].prepare_computations(r, i)
+        reflectance = Intersection.schlick(comps)
+
+        # Assert
+        self.assertEqual(reflectance, 1)
+
+    def test_the_schlick_approximation_with_perpendicular_viewing_angle(self):
+        # Arrange
+        shape = Sphere.glass_sphere()
+        r = Ray(Point(0, 0, 0), Vector(0, 1, 0))
+        i = Intersection.intersections(Intersection(-1, shape), Intersection(1, shape))
+
+        # Act
+        comps = i[1].prepare_computations(r, i)
+        reflectance = Intersection.schlick(comps)
+
+        # Assert
+        self.assertAlmostEqual(reflectance, 0.04)
+
+    def test_the_schlick_approximation_with_small_angle_and_n2_greater_than_n1(self):
+        # Arrange
+        shape = Sphere.glass_sphere()
+        r = Ray(Point(0, 0.99, -2), Vector(0, 0, 1))
+        i = Intersection.intersections(Intersection(1.8589, shape))
+
+        # Act
+        comps = i[0].prepare_computations(r, i)
+        reflectance = Intersection.schlick(comps)
+
+        # Assert
+        self.assertAlmostEqual(reflectance, 0.48873, 5)
+
 
 if __name__ == '__main__':
     unittest.main()
