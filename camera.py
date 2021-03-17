@@ -59,7 +59,7 @@ class Camera:
         for y in range(self.vsize):
             for x in range(self.hsize):
                 ray = self.ray_for_pixel(x, y)
-                colour = world.colour_at(ray)
+                colour = world.colour_at(ray, reflect_depth)
                 image.write_pixel(x, y, colour)
             if show_progress:
                 print(f'{int(100 * y / self.vsize)}% complete')

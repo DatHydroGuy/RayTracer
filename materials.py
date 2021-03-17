@@ -4,8 +4,11 @@ from math import fabs
 
 
 class Material:
+    _casts_shadow = None
+    _shadow_transmission = None
+
     def __init__(self, colour=None, ambient=None, diffuse=None, specular=None, shininess=None, reflective=None,
-                 transparency=None, refractive_index=None):
+                 transparency=None, refractive_index=None, casts_shadow=None, shadow_transmission=None):
         self.colour = Colour(1, 1, 1) if colour is None else colour
         self.ambient = 0.1 if ambient is None else ambient
         self.diffuse = 0.9 if diffuse is None else diffuse
@@ -14,7 +17,29 @@ class Material:
         self.reflective = 0.0 if reflective is None else reflective
         self.transparency = 0.0 if transparency is None else transparency
         self.refractive_index = 1.0 if refractive_index is None else refractive_index
+        self._casts_shadow = True if casts_shadow is None else casts_shadow
+        self._shadow_transmission = 0 if casts_shadow is False else 1 if shadow_transmission is None else\
+            shadow_transmission
         self.pattern = None
+
+    @property
+    def casts_shadow(self):
+        return self._casts_shadow
+
+    @casts_shadow.setter
+    def casts_shadow(self, value):
+        self._casts_shadow = value
+        if not value:
+            self._shadow_transmission = 0
+
+    @property
+    def shadow_transmission(self):
+        return self._shadow_transmission
+
+    @shadow_transmission.setter
+    def shadow_transmission(self, value):
+        self._shadow_transmission = value
+        self._casts_shadow = False if value == 0 else True
 
     def __eq__(self, other, epsilon=0.00001):
         return fabs(self.colour.red - other.colour.red) < epsilon and \
@@ -26,7 +51,9 @@ class Material:
                fabs(self.shininess - other.shininess) < epsilon and \
                fabs(self.reflective - other.reflective) < epsilon and \
                fabs(self.transparency - other.transparency) < epsilon and \
-               fabs(self.refractive_index - other.refractive_index) < epsilon
+               fabs(self.refractive_index - other.refractive_index) < epsilon and \
+               self.casts_shadow == other.casts_shadow and \
+               fabs(self.shadow_transmission - other.shadow_transmission) < epsilon
 
     def lighting(self, obj, light, point, eye_vector, normal_vector, in_shadow=False):
         colour = self.pattern.pattern_at_shape(obj, point) if self.pattern is not None else self.colour

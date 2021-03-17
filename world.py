@@ -58,7 +58,7 @@ class World:
         intersections = self.intersect_world(r)
 
         h = Intersection.hit(intersections)
-        if h is not None and h.t < distance and h.object.casts_shadow:
+        if h is not None and h.t < distance and h.object.material.casts_shadow:
             return True
         else:
             return False

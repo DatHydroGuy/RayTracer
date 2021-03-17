@@ -19,7 +19,6 @@ class Shape(ABC):
         self._transform = Matrix.identity(4)
         self._transform_inverse = Matrix.identity(4)
         self.material = Material()
-        self.casts_shadow = True        # TODO: Move this into materials to allow for transparent materials
 
     @property
     def transform(self):

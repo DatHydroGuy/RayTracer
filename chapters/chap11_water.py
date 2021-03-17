@@ -21,8 +21,8 @@ def run():
 
     water = Plane()
     water.transform = Matrix.translation(0, 1.5, 0)
-    water.casts_shadow = False
     water.material = Material()
+    water.material.casts_shadow = False
     water.material.colour = Colour(0.4, 0.4, 0.4)
     water.material.diffuse = 0.7
     water.material.specular = 1

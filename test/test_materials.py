@@ -175,6 +175,45 @@ class MaterialsTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(m.refractive_index, 1)
 
+    def test_the_default_material_has_a_casts_shadow_property(self):
+        # Arrange
+        m = Material()
+
+        # Act
+
+        # Assert
+        self.assertTrue(m.casts_shadow)
+
+    def test_the_default_material_has_a_shadow_transmission_property(self):
+        # Arrange
+        m = Material()
+
+        # Act
+
+        # Assert
+        self.assertEqual(m.shadow_transmission, 1)
+
+    def test_the_default_material_has_zero_shadow_transmission_if_casts_shadow_is_false(self):
+        # Arrange
+        m = Material()
+
+        # Act
+        m.casts_shadow = False
+
+        # Assert
+        self.assertEqual(m.shadow_transmission, 0)
+
+    def test_the_materials_will_stat_casting_shadows_if_shadow_transmission_is_set_above_zero(self):
+        # Arrange
+        m = Material()
+        m.casts_shadow = False
+
+        # Act
+        m.shadow_transmission = 0.5
+
+        # Assert
+        self.assertTrue(m.casts_shadow)
+
 
 if __name__ == '__main__':
     unittest.main()
