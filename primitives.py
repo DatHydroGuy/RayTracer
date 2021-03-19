@@ -139,3 +139,53 @@ class Plane(Shape):
 
     def local_normal_at(self, object_point):
         return Vector(0, 1, 0)
+
+
+class Cube(Shape):
+    def __init__(self, x=0, y=0, z=0):
+        Shape.__init__(self, x, y, z)
+
+    def __eq__(self, other, epsilon=0.00001):
+        return self.origin == other.origin and \
+               self.transform == other.transform and \
+               self.material == other.material
+
+    def check_axis(self, origin, direction):
+        t_min_numerator = -1 - origin
+        t_max_numerator = 1 - origin
+
+        if fabs(direction) >= self.EPSILON:
+            t_min = t_min_numerator / direction
+            t_max = t_max_numerator / direction
+        else:
+            t_min = t_min_numerator * float('inf')
+            t_max = t_max_numerator * float('inf')
+
+        return min(t_min, t_max), max(t_min, t_max)
+
+    def intersects(self, ray):
+        return super().intersects(ray)
+
+    def local_intersect(self, local_ray):
+        x_tmin, x_tmax = self.check_axis(local_ray.origin.x, local_ray.direction.x)
+        y_tmin, y_tmax = self.check_axis(local_ray.origin.y, local_ray.direction.y)
+        z_tmin, z_tmax = self.check_axis(local_ray.origin.z, local_ray.direction.z)
+        t_min = max(x_tmin, y_tmin, z_tmin)
+        t_max = min(x_tmax, y_tmax, z_tmax)
+        return [Intersection(t_min, self), Intersection(t_max, self)] if t_min <= t_max else []
+
+    def normal_at(self, world_point):
+        return super(Cube, self).normal_at(world_point)
+
+    def local_normal_at(self, object_point):
+        max_x = fabs(object_point.x)
+        max_y = fabs(object_point.y)
+        max_z = fabs(object_point.z)
+        max_dir = max(max_x, max_y, max_z)
+
+        if max_dir == max_x:
+            return Vector(object_point.x, 0, 0)
+        elif max_dir == max_y:
+            return Vector(0, object_point.y, 0)
+        else:
+            return Vector(0, 0, object_point.z)

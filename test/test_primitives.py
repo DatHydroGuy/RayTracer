@@ -446,5 +446,67 @@ class PlaneTestCase(unittest.TestCase):
         self.assertEqual(s.material.refractive_index, 1.5)
 
 
+class CubeTestCase(unittest.TestCase):
+    def test_a_ray_intersects_a_cube(self):
+        # Arrange
+        origins = [Point(5, 0.5, 0), Point(-5, 0.5, 0), Point(0.5, 5, 0), Point(0.5, -5, 0),
+                   Point(0.5, 0, 5), Point(0.5, 0, -5), Point(0, 0.5, 0)]
+        directions = [Vector(-1, 0, 0), Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 1, 0),
+                      Vector(0, 0, -1), Vector(0, 0, 1), Vector(0, 0, 1)]
+        expected_t1s = [4, 4, 4, 4, 4, 4, -1]
+        expected_t2s = [6, 6, 6, 6, 6, 6, 1]
+        c = Cube()
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx]
+                expected_t1 = expected_t1s[idx]
+                expected_t2 = expected_t2s[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertEqual(xs[0].t, expected_t1)
+                self.assertEqual(xs[1].t, expected_t2)
+
+    def test_a_ray_misses_a_cube(self):
+        # Arrange
+        origins = [Point(-2, 0, 0), Point(0, -2, 0), Point(0, 0, -2),
+                   Point(2, 0, 2), Point(0, 2, 2), Point(2, 2, 0)]
+        directions = [Vector(0.2673, 0.5345, 0.8018), Vector(0.8018, 0.2673, 0.5345), Vector(0.5345, 0.8018, 0.2673),
+                      Vector(0, 0, -1), Vector(0, -1, 0), Vector(-1, 0, 0)]
+        c = Cube()
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertEqual(len(xs), 0)
+
+    def test_the_normal_on_the_surface_of_a_cube(self):
+        # Arrange
+        points = [Point(1, 0.5, -0.8), Point(-1, -0.2, 0.9), Point(-0.4, 1, -0.1), Point(0.3, -1, -0.7),
+                  Point(-0.6, 0.3, 1), Point(0.4, 0.4, -1), Point(1, 1, 1), Point(-1, -1, -1)]
+        vectors = [Vector(1, 0, 0), Vector(-1, 0, 0), Vector(0, 1, 0), Vector(0, -1, 0), Vector(0, 0, 1),
+                   Vector(0, 0, -1), Vector(1, 0, 0), Vector(-1, 0, 0)]
+        c = Cube()
+
+        for idx, point in enumerate(points):
+            with self.subTest(point=point):
+
+                # Act
+                normal = c.local_normal_at(point)
+
+                # Assert
+                self.assertEqual(normal, vectors[idx])
+
+
 if __name__ == '__main__':
     unittest.main()
