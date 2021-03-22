@@ -189,3 +189,188 @@ class Cube(Shape):
             return Vector(0, object_point.y, 0)
         else:
             return Vector(0, 0, object_point.z)
+
+
+class Cylinder(Shape):
+    def __init__(self, x=0, y=0, z=0):
+        Shape.__init__(self, x, y, z)
+        self.minimum = -float('inf')
+        self.maximum = float('inf')
+        self.closed = False
+
+    def __eq__(self, other, epsilon=0.00001):
+        return self.origin == other.origin and \
+               self.transform == other.transform and \
+               self.material == other.material
+
+    def intersects(self, ray):
+        return super().intersects(ray)
+
+    def local_intersect(self, local_ray):
+        a = local_ray.direction.x ** 2 + local_ray.direction.z ** 2
+
+        xs = []
+        if fabs(a) >= self.EPSILON:
+            b = 2 * local_ray.origin.x * local_ray.direction.x + 2 * local_ray.origin.z * local_ray.direction.z
+            c = local_ray.origin.x ** 2 + local_ray.origin.z ** 2 - 1
+            disc = b ** 2 - 4 * a * c
+
+            if disc < 0:
+                return []
+
+            t0 = (-b - sqrt(disc)) / (2 * a)
+            t1 = (-b + sqrt(disc)) / (2 * a)
+            if t0 > t1:
+                t0, t1 = t1, t0
+
+            y0 = local_ray.origin.y + t0 * local_ray.direction.y
+            if self.minimum < y0 < self.maximum:
+                xs.append(Intersection(t0, self))
+
+            y1 = local_ray.origin.y + t1 * local_ray.direction.y
+            if self.minimum < y1 < self.maximum:
+                xs.append(Intersection(t1, self))
+
+        self.intersect_caps(local_ray, xs)
+        return xs
+
+    def normal_at(self, world_point):
+        return super(Cylinder, self).normal_at(world_point)
+
+    def local_normal_at(self, object_point):
+        dist = object_point.x ** 2 + object_point.z ** 2
+
+        if dist < 1 and object_point.y >= self.maximum - self.EPSILON:
+            return Vector(0, 1, 0)
+        elif dist < 1 and object_point.y <= self.minimum + self.EPSILON:
+            return Vector(0, -1, 0)
+        else:
+            return Vector(object_point.x, 0, object_point.z)
+
+    @staticmethod
+    def check_cap(ray, t):
+        # Helper function. Check whether intersection is within a radius of 1 from the y-axis.
+        x = ray.origin.x + t * ray.direction.x
+        z = ray.origin.z + t * ray.direction.z
+        return x * x + z * z <= 1
+
+    def intersect_caps(self, ray, intersections):
+        if not self.closed or fabs(ray.direction.y) < self.EPSILON:
+            return
+
+        # Check intersection with lower end cap by intersecting ray with plane at y=self.minimum
+        t = (self.minimum - ray.origin.y) / ray.direction.y
+        if self.check_cap(ray, t):
+            intersections.append(Intersection(t, self))
+
+        # Check intersection with upper end cap by intersecting ray with plane at y=self.maximum
+        t = (self.maximum - ray.origin.y) / ray.direction.y
+        if self.check_cap(ray, t):
+            intersections.append(Intersection(t, self))
+
+
+class Cone(Shape):
+    def __init__(self, x=0, y=0, z=0):
+        Shape.__init__(self, x, y, z)
+        self.minimum = -float('inf')
+        self.maximum = float('inf')
+        self.closed = False
+
+    def __eq__(self, other, epsilon=0.00001):
+        return self.origin == other.origin and \
+               self.transform == other.transform and \
+               self.material == other.material
+
+    def intersects(self, ray):
+        return super().intersects(ray)
+
+    def local_intersect(self, local_ray):
+        a = local_ray.direction.x ** 2 - local_ray.direction.y ** 2 + local_ray.direction.z ** 2
+        b = 2 * local_ray.origin.x * local_ray.direction.x - \
+            2 * local_ray.origin.y * local_ray.direction.y + \
+            2 * local_ray.origin.z * local_ray.direction.z
+        c = local_ray.origin.x ** 2 - local_ray.origin.y ** 2 + local_ray.origin.z ** 2
+
+        xs = []
+        if fabs(a) < self.EPSILON:
+            if fabs(b) >= self.EPSILON:
+                t = -c / (2 * b)
+                xs.append(Intersection(t, self))
+        else:
+            disc = b ** 2 - 4 * a * c
+
+            if disc < 0:
+                return []
+
+            t0 = (-b - sqrt(disc)) / (2 * a)
+            t1 = (-b + sqrt(disc)) / (2 * a)
+            if t0 > t1:
+                t0, t1 = t1, t0
+
+            y0 = local_ray.origin.y + t0 * local_ray.direction.y
+            if self.minimum < y0 < self.maximum:
+                xs.append(Intersection(t0, self))
+
+            y1 = local_ray.origin.y + t1 * local_ray.direction.y
+            if self.minimum < y1 < self.maximum:
+                xs.append(Intersection(t1, self))
+
+        self.intersect_caps(local_ray, xs)
+        return xs
+
+    def normal_at(self, world_point):
+        return super(Cone, self).normal_at(world_point)
+
+    def local_normal_at(self, object_point):
+        dist = object_point.x ** 2 + object_point.z ** 2
+        y = sqrt(dist) if object_point.y <= 0 else -sqrt(dist)
+
+        if dist < 1 and object_point.y >= self.maximum - self.EPSILON:
+            return Vector(0, 1, 0)
+        elif dist < 1 and object_point.y <= self.minimum + self.EPSILON:
+            return Vector(0, -1, 0)
+        else:
+            return Vector(object_point.x, y, object_point.z)
+
+    @staticmethod
+    def check_cap(ray, t, radius):
+        # Helper function. Check whether intersection is within a radius of 1 from the y-axis.
+        x = ray.origin.x + t * ray.direction.x
+        z = ray.origin.z + t * ray.direction.z
+        return x * x + z * z <= fabs(radius)
+
+    def intersect_caps(self, ray, intersections):
+        if not self.closed or fabs(ray.direction.y) < self.EPSILON:
+            return
+
+        # Check intersection with lower end cap by intersecting ray with plane at y=self.minimum
+        t = (self.minimum - ray.origin.y) / ray.direction.y
+        if self.check_cap(ray, t, self.minimum):
+            intersections.append(Intersection(t, self))
+
+        # Check intersection with upper end cap by intersecting ray with plane at y=self.maximum
+        t = (self.maximum - ray.origin.y) / ray.direction.y
+        if self.check_cap(ray, t, self.maximum):
+            intersections.append(Intersection(t, self))
+
+
+# class Blank(Shape):
+#     def __init__(self, x=0, y=0, z=0):
+#         Shape.__init__(self, x, y, z)
+#
+#     def __eq__(self, other, epsilon=0.00001):
+#         return self.origin == other.origin and \
+#                self.transform == other.transform and \
+#                self.material == other.material
+#
+#     def intersects(self, ray):
+#         return super().intersects(ray)
+#
+#     def local_intersect(self, local_ray):
+#         return []
+#
+#     def normal_at(self, world_point):
+#         return super(Blank, self).normal_at(world_point)
+#
+#     def local_normal_at(self, object_point):
+#         return Vector(0, 0, 0)

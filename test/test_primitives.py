@@ -508,5 +508,225 @@ class CubeTestCase(unittest.TestCase):
                 self.assertEqual(normal, vectors[idx])
 
 
+class CylinderTestCase(unittest.TestCase):
+    def test_a_ray_misses_a_cylinder(self):
+        # Arrange
+        origins = [Point(1, 0, 0), Point(0, 0, 0), Point(0, 0, -5)]
+        directions = [Vector(0, 1, 0), Vector(0, 1, 0), Vector(1, 1, 1)]
+        c = Cylinder()
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx].normalise()
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertEqual(len(xs), 0)
+
+    def test_a_ray_intersects_a_cylinder(self):
+        # Arrange
+        origins = [Point(1, 0, -5), Point(0, 0, -5), Point(0.5, 0, -5)]
+        directions = [Vector(0, 0, 1), Vector(0, 0, 1), Vector(0.1, 1, 1)]
+        expected_t1s = [5, 4, 6.80798]
+        expected_t2s = [5, 6, 7.08872]
+        c = Cylinder()
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx].normalise()
+                expected_t1 = expected_t1s[idx]
+                expected_t2 = expected_t2s[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertAlmostEqual(xs[0].t, expected_t1, 5)
+                self.assertAlmostEqual(xs[1].t, expected_t2, 5)
+
+    def test_the_normal_on_the_surface_of_a_cylinder(self):
+        # Arrange
+        points = [Point(1, 0, 0), Point(0, 5, -1), Point(0, -2, 1), Point(-1, 1, 0)]
+        vectors = [Vector(1, 0, 0), Vector(0, 0, -1), Vector(0, 0, 1), Vector(-1, 0, 0)]
+        c = Cylinder()
+
+        for idx, point in enumerate(points):
+            with self.subTest(point=point):
+
+                # Act
+                normal = c.local_normal_at(point)
+
+                # Assert
+                self.assertEqual(normal, vectors[idx])
+
+    def test_the_default_minimum_and_maximum_extents_of_a_cylinder(self):
+        # Arrange
+        c = Cylinder()
+
+        # Act
+
+        # Assert
+        self.assertEqual(c.minimum, -float('inf'))
+        self.assertEqual(c.maximum, float('inf'))
+
+    def test_intersecting_a_constrained_cylinder(self):
+        # Arrange
+        origins = [Point(0, 1.5, 0), Point(0, 3, -5), Point(0, 0, -5),
+                   Point(0, 2, -5), Point(0, 1, -5), Point(0, 1.5, -2)]
+        directions = [Vector(0.1, 1, 0), Vector(0, 0, 1), Vector(0, 0, 1),
+                      Vector(0, 0, 1), Vector(0, 0, 1), Vector(0, 0, 1)]
+        expected_counts = [0, 0, 0, 0, 0, 2]
+        c = Cylinder()
+        c.minimum = 1
+        c.maximum = 2
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx].normalise()
+                expected_count = expected_counts[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertEqual(len(xs), expected_count)
+
+    def test_the_default_closed_value_of_a_cylinder(self):
+        # Arrange
+        c = Cylinder()
+
+        # Act
+
+        # Assert
+        self.assertFalse(c.closed)
+
+    def test_intersecting_the_end_caps_of_a_closed_cylinder(self):
+        # Arrange
+        origins = [Point(0, 3, 0), Point(0, 3, -2), Point(0, 4, -2), Point(0, 0, -2), Point(0, -1, -2)]
+        directions = [Vector(0, -1, 0), Vector(0, -1, 2), Vector(0, -1, 1), Vector(0, 1, 2), Vector(0, 1, 1)]
+        expected_counts = [2, 2, 2, 2, 2]
+        c = Cylinder()
+        c.minimum = 1
+        c.maximum = 2
+        c.closed = True
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx].normalise()
+                expected_count = expected_counts[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertEqual(len(xs), expected_count)
+
+    def test_normal_vectors_on_the_end_caps_of_a_closed_cylinder(self):
+        # Arrange
+        points = [Point(0, 1, 0), Point(0.5, 1, 0), Point(0, 1, 0.5),
+                  Point(0, 2, 0), Point(0.5, 2, 0), Point(0, 2, 0.5)]
+        normals = [Vector(0, -1, 0), Vector(0, -1, 0), Vector(0, -1, 0),
+                   Vector(0, 1, 0), Vector(0, 1, 0), Vector(0, 1, 0)]
+        c = Cylinder()
+        c.minimum = 1
+        c.maximum = 2
+        c.closed = True
+
+        for idx, point in enumerate(points):
+            with self.subTest(point=point):
+                expected_normal = normals[idx]
+
+                # Act
+                n = c.local_normal_at(point)
+
+                # Assert
+                self.assertEqual(n, expected_normal)
+
+
+class ConeTestCase(unittest.TestCase):
+    def test_a_ray_intersects_a_cone(self):
+        # Arrange
+        origins = [Point(0, 0, -5), Point(0, 0, -5), Point(1, 1, -5)]
+        directions = [Vector(0, 0, 1), Vector(1, 1, 1), Vector(-0.5, -1, 1)]
+        expected_t1s = [5, 8.66025, 4.55006]
+        expected_t2s = [5, 8.66025, 49.44994]
+        c = Cone()
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx].normalise()
+                expected_t1 = expected_t1s[idx]
+                expected_t2 = expected_t2s[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertAlmostEqual(xs[0].t, expected_t1, 5)
+                self.assertAlmostEqual(xs[1].t, expected_t2, 5)
+
+    def test_a_ray_parallel_to_one_conical_half_intersects_the_other_cone_only_once(self):
+        # Arrange
+        c = Cone()
+        direction = Vector(0, 1, 1).normalise()
+        expected = 0.35355
+        r = Ray(Point(0, 0, -1), direction)
+
+        # Act
+        xs = c.local_intersect(r)
+
+        # Assert
+        self.assertEqual(len(xs), 1)
+        self.assertAlmostEqual(xs[0].t, expected, 5)
+
+    def test_intersecting_a_constrained_cones_end_caps(self):
+        # Arrange
+        origins = [Point(0, 0, -5), Point(0, 0, -0.25), Point(0, 0, -0.25)]
+        directions = [Vector(0, 1, 0), Vector(0, 1, 1), Vector(0, 1, 0)]
+        expected_counts = [0, 2, 4]
+        c = Cone()
+        c.minimum = -0.5
+        c.maximum = 0.5
+        c.closed = True
+
+        for idx, origin in enumerate(origins):
+            with self.subTest(origin=origin):
+                direction = directions[idx].normalise()
+                expected_count = expected_counts[idx]
+                r = Ray(origin, direction)
+
+                # Act
+                xs = c.local_intersect(r)
+
+                # Assert
+                self.assertEqual(len(xs), expected_count)
+
+    def test_normal_vectors_on_a_closed_cone(self):
+        # Arrange
+        points = [Point(0, 0, 0), Point(1, 1, 1), Point(-1, -1, 0)]
+        normals = [Vector(0, 0, 0), Vector(1, -sqrt(2), 1), Vector(-1, 1, 0)]
+        c = Cone()
+        c.minimum = -0.5
+        c.maximum = 0.5
+        c.closed = True
+
+        for idx, point in enumerate(points):
+            with self.subTest(point=point):
+                expected_normal = normals[idx]
+
+                # Act
+                n = c.local_normal_at(point)
+
+                # Assert
+                self.assertEqual(n, expected_normal)
+
+
 if __name__ == '__main__':
     unittest.main()
